@@ -6,7 +6,6 @@ import { textYeild, createCall } from "./controller.js";
 import { PassThrough, Readable } from "stream";
 import { AssemblyAI } from "assemblyai";
 
-import fs from "fs";
 const app = new Hono();
 
 const SttStream = new PassThrough();
@@ -33,17 +32,20 @@ transcriber.on("close", (code, reason) =>
   console.log("Session closed:", code, reason)
 );
 
-transcriber.on("turn", (turn) => {
+transcriber.on("turn", async (turn) => {
   if (!turn.transcript) {
     return;
   }
 
-  console.log("Turn:", turn);
+  if (turn.transcript && turn.end_of_turn) {
+    console.log("Final Transcript:", turn.transcript);
+    for await (const chunk of textYeild(turn.transcript)) {
+      console.log("LLM stream:", chunk);
+    }
+  }
 });
 
 let buffer = Buffer.alloc(0);
-
-const fileStream = fs.createWriteStream("output.txt", { flags: "a" });
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
 app.get("/make-call", async (c) => {
@@ -61,7 +63,7 @@ app.post("/voice", async (c) => {
    <Response>
   <Say>This demo application will repeat back what you say. Watch the console to see the media messages. Begin speaking now.</Say>
   <Connect>
-    <Stream url="wss://cbc1cea37a84.ngrok-free.app/ws" codec="audio/l16"> 
+    <Stream url="wss://cbc1cea37a84.ngrok-free.app/ws"> 
       <Parameter name="aCutomParameter" value="aCustomValue that was set in TwiML" />
     </Stream>
   </Connect>
@@ -75,7 +77,6 @@ app.post("/voice", async (c) => {
 app.get(
   "/ws",
   upgradeWebSocket((c) => {
-    Readable.toWeb(SttStream).pipeTo(transcriber.stream());
     return {
       onMessage(event, ws) {
         // console.log(`Message from client: ${event.data}`);
@@ -86,6 +87,7 @@ app.get(
           const chunk = Buffer.from(msg.media.payload, "base64");
           buffer = Buffer.concat([buffer, chunk]);
 
+          // this is to ensure that it audio between 50ms to 100ms or gets 30002 error from assembly
           if (buffer.length >= 800) {
             transcriber.sendAudio(buffer);
             buffer = Buffer.alloc(0); // reset buffer

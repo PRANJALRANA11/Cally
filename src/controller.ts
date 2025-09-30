@@ -10,9 +10,10 @@ const client = new Cerebras({
 });
 
 export async function* textYeild(msg: string) {
+  console.log("this runs");
   const stream = await client.chat.completions.create({
     messages: [{ role: "user", content: msg }],
-    model: "llama-4-17B-omni-16E",
+    model: "llama3.3-70b",
     stream: true,
   });
 
