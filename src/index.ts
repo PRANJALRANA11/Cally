@@ -5,6 +5,64 @@ import { createNodeWebSocket } from "@hono/node-ws";
 import { textYeild, createCall } from "./controller.js";
 import { PassThrough, Readable } from "stream";
 import { AssemblyAI } from "assemblyai";
+import WebSocket from "ws";
+import type { WSContext } from "hono/ws";
+
+let isSocketOpenEleven = false;
+let socketInstanceForTwilio: WSContext;
+let streamSid = 0;
+const voiceId = "Xb7hH8MSUJpSbSDYk0k2";
+
+const model = "eleven_flash_v2_5";
+
+const uri: string = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}&output_format=ulaw_8000`;
+
+const websocket = new WebSocket(uri, {
+  headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY },
+});
+
+websocket.on("open", async () => {
+  console.log("🔗 ElevenLabs socket opened");
+  isSocketOpenEleven = true;
+  const beat = setInterval(() => {
+    if (websocket.readyState === WebSocket.OPEN) {
+      websocket.send(JSON.stringify({ text: " " }));
+      console.log("💓 Sent heartbeat");
+    }
+  }, 20000);
+  websocket.send(
+    JSON.stringify({
+      text: " ",
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.8,
+        use_speaker_boost: false,
+      },
+      generation_config: { chunk_length_schedule: [120, 160, 250, 290] },
+    })
+  );
+  websocket.on("close", () => {
+    console.log("🔗 ElevenLabs socket closed");
+    clearInterval(beat);
+    isSocketOpenEleven = false;
+  });
+});
+
+websocket.on("message", function incoming(event) {
+  const data = JSON.parse(event.toString());
+  if (data["audio"]) {
+    // const audioBuffer: Buffer = Buffer.from(data["audio"], "base64");
+    socketInstanceForTwilio.send(
+      JSON.stringify({
+        streamSid,
+        event: "media",
+        media: {
+          payload: data["audio"],
+        },
+      })
+    );
+  }
+});
 
 const app = new Hono();
 
@@ -21,16 +79,17 @@ const transcriber = SttClient.streaming.transcriber({
 });
 
 transcriber.on("open", ({ id }) => {
-  console.log(`Session opened with ID: ${id}`);
+  console.log(`Session opened with Id: ${id}`);
 });
 
 transcriber.on("error", (error) => {
   console.error("Error:", error);
 });
 
-transcriber.on("close", (code, reason) =>
-  console.log("Session closed:", code, reason)
-);
+transcriber.on("close", (code, reason) => {
+  console.log("Session closed:", code, reason);
+  websocket.send(JSON.stringify({ text: "" }));
+});
 
 transcriber.on("turn", async (turn) => {
   if (!turn.transcript) {
@@ -39,8 +98,11 @@ transcriber.on("turn", async (turn) => {
 
   if (turn.transcript && turn.end_of_turn) {
     console.log("Final Transcript:", turn.transcript);
-    for await (const chunk of textYeild(turn.transcript)) {
-      console.log("LLM stream:", chunk);
+    if (isSocketOpenEleven) {
+      for await (const chunk of textYeild(turn.transcript)) {
+        console.log("LLM stream:", chunk);
+        websocket.send(JSON.stringify({ text: chunk }));
+      }
     }
   }
 });
@@ -79,8 +141,10 @@ app.get(
   upgradeWebSocket((c) => {
     return {
       onMessage(event, ws) {
+        socketInstanceForTwilio = ws;
         // console.log(`Message from client: ${event.data}`);
         const msg = JSON.parse(String(event.data));
+        if (msg.event === "start" && msg.start) streamSid = msg.start.streamSid;
         if (msg.event == "media") {
           let base64String = msg.media.payload;
 
@@ -98,6 +162,7 @@ app.get(
       },
       onClose: () => {
         console.log("Connection closed");
+        transcriber.close();
       },
     };
   })
