@@ -18,6 +18,7 @@ const SttClient = new AssemblyAI({
 const transcriber = SttClient.streaming.transcriber({
   sampleRate: 8000,
   formatTurns: true,
+  encoding: "pcm_mulaw",
 });
 
 transcriber.on("open", ({ id }) => {
@@ -37,7 +38,7 @@ transcriber.on("turn", (turn) => {
     return;
   }
 
-  console.log("Turn:", turn.transcript);
+  console.log("Turn:", turn);
 });
 
 let buffer = Buffer.alloc(0);
@@ -60,7 +61,7 @@ app.post("/voice", async (c) => {
    <Response>
   <Say>This demo application will repeat back what you say. Watch the console to see the media messages. Begin speaking now.</Say>
   <Connect>
-    <Stream url="wss://cbc1cea37a84.ngrok-free.app/ws">
+    <Stream url="wss://cbc1cea37a84.ngrok-free.app/ws" codec="audio/l16"> 
       <Parameter name="aCutomParameter" value="aCustomValue that was set in TwiML" />
     </Stream>
   </Connect>
@@ -84,11 +85,9 @@ app.get(
 
           const chunk = Buffer.from(msg.media.payload, "base64");
           buffer = Buffer.concat([buffer, chunk]);
-          writeWav(buffer, "test.wav");
 
           if (buffer.length >= 800) {
-            console.log("this should run");
-            SttStream.write(buffer);
+            transcriber.sendAudio(buffer);
             buffer = Buffer.alloc(0); // reset buffer
           }
         }
@@ -112,29 +111,3 @@ const server = serve(
   }
 );
 injectWebSocket(server);
-
-function writeWav(buffer, filePath, sampleRate = 8000) {
-  const header = Buffer.alloc(44);
-
-  // RIFF header
-  header.write("RIFF", 0);
-  header.writeUInt32LE(36 + buffer.length, 4);
-  header.write("WAVE", 8);
-
-  // fmt chunk
-  header.write("fmt ", 12);
-  header.writeUInt32LE(16, 16); // PCM
-  header.writeUInt16LE(1, 20); // Linear PCM
-  header.writeUInt16LE(1, 22); // Mono
-  header.writeUInt32LE(sampleRate, 24);
-  header.writeUInt32LE(sampleRate * 2, 28); // byte rate
-  header.writeUInt16LE(2, 32); // block align
-  header.writeUInt16LE(16, 34); // bits per sample
-
-  // data chunk
-  header.write("data", 36);
-  header.writeUInt32LE(buffer.length, 40);
-
-  const wav = Buffer.concat([header, buffer]);
-  fs.writeFileSync(filePath, wav);
-}
