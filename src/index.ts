@@ -80,7 +80,7 @@ app.get(
     return {
       onMessage(event, ws) {
         // console.log(`Message from client: ${event.data}`);
-        const msg = JSON.parse(event.data);
+        const msg = JSON.parse(String(event.data));
         if (msg.event == "media") {
           let base64String = msg.media.payload;
 
