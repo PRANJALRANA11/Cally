@@ -11,14 +11,19 @@
     "@elevenlabs/elevenlabs-js": "^2.16.0",
     "@hono/node-server": "^1.19.4",
     "@hono/node-ws": "^1.2.0",
+    "@prisma/client": "^6.16.3",
     "assemblyai": "^4.16.1",
     "dotenv": "^17.2.2",
+    "googleapis": "^161.0.0",
     "hono": "^4.9.9",
     "ngrok": "5.0.0-beta.2",
-    "twilio": "^5.10.1"
+    "twilio": "^5.10.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
+    "@types/ws": "^8.18.1",
+    "prisma": "^6.16.3",
     "tsx": "^4.7.1",
     "typescript": "^5.8.3"
   }

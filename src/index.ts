@@ -3,7 +3,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { createNodeWebSocket } from "@hono/node-ws";
 import {
-  textYeild,
+  textYield,
   createCall,
   createAudioStreamFromText,
 } from "./controller.js";
@@ -16,11 +16,16 @@ let isSocketOpenEleven = false;
 let prevTurnOrder = 5;
 let streamSid = 0;
 const voiceId = "Xb7hH8MSUJpSbSDYk0k2";
-let twilioWs: WSContext;
+export let twilioWs: WSContext;
 const model = "eleven_flash_v2_5";
 
 const app = new Hono();
 
+// console.log(
+//   await textYield(
+//     "hy i wanted to schedule an appointment at nine am wednesday myself pranjal and my email is testmailpranjal@gmail.com"
+//   )
+// );
 const SttClient = new AssemblyAI({
   apiKey: process.env.ASSEMBLY_API_KEY || "",
 });
@@ -48,14 +53,19 @@ transcriber.on("turn", async (turn) => {
   if (!turn.transcript) {
     return;
   }
-  await delay(0.5);
+  await delay(0.2);
 
   if (turn.transcript && turn.end_of_turn && turn.turn_order != prevTurnOrder) {
     prevTurnOrder = turn.turn_order;
     console.log("Final Transcript:", turn.transcript, turn.turn_order);
-    const generatedText = await textYeild(turn.transcript);
+    const generatedText = await textYield(turn.transcript);
 
-    createAudioStreamFromText(generatedText, twilioWs, streamSid);
+    createAudioStreamFromText(
+      generatedText[0],
+      twilioWs,
+      streamSid,
+      generatedText[1]
+    );
   }
 });
 
@@ -75,13 +85,13 @@ app.post("/voice", async (c) => {
   console.log("run");
   const twiml = `
    <Response>
- 
+  <Say>Hi, welcome to the dental clinic. You are now connected with our AI receptionist.</Say>
   <Connect>
     <Stream url="wss://cbc1cea37a84.ngrok-free.app/ws"> 
       <Parameter name="aCutomParameter" value="aCustomValue that was set in TwiML" />
     </Stream>
   </Connect>
-  
+
 </Response>
   `;
 
@@ -92,7 +102,7 @@ app.get(
   "/ws",
   upgradeWebSocket((c) => {
     return {
-      onMessage(event, ws) {
+      async onMessage(event, ws) {
         twilioWs = ws;
         // console.log(`Message from client: ${event.data}`);
         const msg = JSON.parse(String(event.data));
@@ -109,12 +119,14 @@ app.get(
             buffer = Buffer.alloc(0); // reset buffer
           }
         }
-
+        if (msg.event == "mark") {
+          await ws.close();
+        }
         ws.send("Hello from server!");
       },
-      onClose: () => {
+      onClose: async () => {
         console.log("Connection closed");
-        transcriber.close();
+        await transcriber.close();
       },
     };
   })
