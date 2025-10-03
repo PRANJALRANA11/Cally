@@ -73,6 +73,10 @@ transcriber.on("turn", async (turn) => {
 let buffer = Buffer.alloc(0);
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
+app.get("/", async (c) => {
+  return c.text("chal congo teraa deploy hogyaa");
+});
+
 app.get("/make-call", async (c) => {
   let numberToCall: string = c.req.query("number") || "";
   emailToCall = c.req.query("email") || "";
