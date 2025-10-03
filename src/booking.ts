@@ -1,6 +1,7 @@
 // calendar-service.ts
 import { google } from "googleapis";
 import { PrismaClient } from "@prisma/client";
+import { emailToCall } from "./index.js";
 
 // Initialize Prisma Client
 const prisma = new PrismaClient();
@@ -33,7 +34,7 @@ export async function bookAppointment(
   name: string,
   date: string,
   time: string,
-  email: string,
+
   description?: string,
   phone?: string
 ) {
@@ -54,7 +55,7 @@ export async function bookAppointment(
         dateTime: endDateTime.toISOString(),
         timeZone: process.env.TIMEZONE || "America/New_York",
       },
-      attendees: email ? [{ email }] : [],
+      attendees: [{ email: emailToCall }],
       reminders: {
         useDefault: false,
         overrides: [
@@ -75,7 +76,7 @@ export async function bookAppointment(
     const appointment = await prisma.appointment.create({
       data: {
         name,
-        email,
+        email: emailToCall,
         phone,
         date,
         time,
@@ -83,7 +84,6 @@ export async function bookAppointment(
         calendarLink: response.data.htmlLink,
         description,
         status: "scheduled",
-        
       },
     });
 
@@ -106,15 +106,11 @@ export async function bookAppointment(
 /**
  * Reschedule an appointment
  */
-export async function rescheduleAppointment(
-  email: string,
-  newDate: string,
-  newTime: string
-) {
+export async function rescheduleAppointment(newDate: string, newTime: string) {
   try {
     // Find appointment in database
     const appointment = await prisma.appointment.findFirst({
-      where: { email },
+      where: { email: emailToCall },
     });
 
     if (!appointment) {
@@ -153,7 +149,7 @@ export async function rescheduleAppointment(
 
     // Update database
     const updatedAppointment = await prisma.appointment.updateMany({
-      where: { email },
+      where: { email: emailToCall },
       data: {
         date: newDate,
         time: newTime,
@@ -178,11 +174,11 @@ export async function rescheduleAppointment(
 /**
  * Cancel an appointment
  */
-export async function cancelAppointment(email: string) {
+export async function cancelAppointment() {
   try {
     // Find appointment in database
     const appointment = await prisma.appointment.findFirst({
-      where: { email },
+      where: { email: emailToCall },
     });
 
     if (!appointment) {
@@ -198,7 +194,7 @@ export async function cancelAppointment(email: string) {
 
     // Update status in database (soft delete)
     await prisma.appointment.updateMany({
-      where: { email },
+      where: { email: emailToCall },
       data: { status: "cancelled" },
     });
 

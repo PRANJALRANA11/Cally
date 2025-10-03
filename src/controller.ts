@@ -44,6 +44,7 @@ Your responsibilities:
 - When you have enough details, reply ONLY with JSON tool_call.
 - When the conversation ends, reply ONLY with { "tool": "hangup" }.
 
+
 Date format for tools: use YYYY-MM-DD (e.g., "2025-10-02")
 Time format for tools: use HH:MM in 24-hour format (e.g., "15:00" for 3 PM)
 The Current Date is -> ${date} and time is ${time}
@@ -52,7 +53,6 @@ Examples:
 {
   "tool": "book",
   "name": "John Doe",
-  "email": "john@example.com",
   "date": "2025-10-02",
   "time": "15:00",
   "spokenDate": "October second",
@@ -61,7 +61,6 @@ Examples:
 
 {
   "tool": "reschedule",
-  "email": "john@example.com",
   "newDate": "2025-10-05",
   "newTime": "14:00",
   "spokenDate": "October fifth",
@@ -69,9 +68,9 @@ Examples:
 }
 
 Available tools:
-- "book": needs name, email (optional), date, time, spokenDate, spokenTime
-- "reschedule": needs email, newDate, newTime, spokenDate, spokenTime
-- "cancel": needs email
+- "book": needs name, date, time, spokenDate, spokenTime
+- "reschedule": needs  newDate, newTime, spokenDate, spokenTime
+- "cancel": no details
 - "hangup": no details
 
 Your goal: sound caring, clear, and efficient.
@@ -127,7 +126,7 @@ export async function textYield(msg: string): Promise<[string, boolean]> {
             parsed.name,
             parsed.date,
             parsed.time,
-            parsed.email,
+
             `Dental appointment for ${parsed.name}`
           );
 
@@ -166,7 +165,6 @@ export async function textYield(msg: string): Promise<[string, boolean]> {
           }
 
           toolResult = await rescheduleAppointment(
-            parsed.appointmentId,
             parsed.newDate,
             parsed.newTime
           );
@@ -193,7 +191,7 @@ export async function textYield(msg: string): Promise<[string, boolean]> {
             return [errorMsg, false];
           }
         } else if (parsed.tool === "cancel") {
-          toolResult = await cancelAppointment(parsed.appointmentId);
+          toolResult = await cancelAppointment();
 
           if (toolResult.success) {
             const confirmMsg = `Your appointment has been cancelled. If you need to book again in the future, just let me know!`;

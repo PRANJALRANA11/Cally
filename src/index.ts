@@ -18,6 +18,7 @@ let streamSid = 0;
 const voiceId = "Xb7hH8MSUJpSbSDYk0k2";
 export let twilioWs: WSContext;
 const model = "eleven_flash_v2_5";
+export let emailToCall: string;
 
 const app = new Hono();
 
@@ -25,7 +26,7 @@ const app = new Hono();
 //   await textYield(
 //     "hy i wanted to schedule an appointment at nine am wednesday myself pranjal and my email is testmailpranjal@gmail.com"
 //   )
-// );
+// )
 const SttClient = new AssemblyAI({
   apiKey: process.env.ASSEMBLY_API_KEY || "",
 });
@@ -74,6 +75,7 @@ const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
 app.get("/make-call", async (c) => {
   let numberToCall: string = c.req.query("number") || "";
+  emailToCall = c.req.query("email") || "";
 
   console.log(numberToCall);
   await createCall(numberToCall);
