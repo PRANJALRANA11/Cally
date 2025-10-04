@@ -93,7 +93,7 @@ app.post("/voice", async (c) => {
    <Response>
   <Say>Hi, welcome to the dental clinic. You are now connected with our AI receptionist.</Say>
   <Connect>
-    <Stream url="wss://cbc1cea37a84.ngrok-free.app/ws"> 
+    <Stream url="wss://cally.pranjalrana.com/ws"> 
       <Parameter name="aCutomParameter" value="aCustomValue that was set in TwiML" />
     </Stream>
   </Connect>

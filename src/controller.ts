@@ -249,7 +249,7 @@ export async function textYield(msg: string): Promise<[string, boolean]> {
 export const createCall = async (toNum: string) => {
   try {
     const message = await TwClient.calls.create({
-      url: "https://cbc1cea37a84.ngrok-free.app/voice",
+      url: "https://cally.pranjalrana.com/voice",
       to: "+916280823503",
       from: "+18644798961",
     });
