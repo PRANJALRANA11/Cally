@@ -121,6 +121,7 @@ app.get(
 
           // this is to ensure that it audio between 50ms to 100ms or gets 30002 error from assembly
           if (buffer.length >= 800) {
+            // @ts-ignore
             transcriber.sendAudio(buffer);
             buffer = Buffer.alloc(0); // reset buffer
           }

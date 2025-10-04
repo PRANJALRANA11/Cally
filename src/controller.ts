@@ -94,7 +94,7 @@ export async function textYield(msg: string): Promise<[string, boolean]> {
       temperature: 0.7,
     });
 
-    const rawReply = response.choices[0].message.content ?? "";
+    const rawReply = (response as any).choices[0].message.content ?? "";
     console.log("Raw reply:", rawReply);
 
     // Try to extract JSON from the reply

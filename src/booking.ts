@@ -160,7 +160,6 @@ export async function rescheduleAppointment(newDate: string, newTime: string) {
     return {
       success: true,
       details: updatedAppointment,
-      calendarLink: updatedAppointment.calendarLink,
     };
   } catch (error: any) {
     console.error("Error rescheduling appointment:", error);
