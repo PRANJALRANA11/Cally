@@ -1,6 +1,6 @@
 // calendar-service.ts
 import { google } from "googleapis";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "./generated/client/index.js";
 import { emailToCall } from "./index.js";
 
 // Initialize Prisma Client
