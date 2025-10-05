@@ -6,7 +6,7 @@
 
 <h2>🚀 Demo</h2>
 
-[d](d)
+[checkout the demo here ](https://www.loom.com/share/df386b2eabff406d87d36dc1abc3d871?sid=b4beadd9-9b43-4916-904a-b99db0f392e3)
 
 <h2>Project Screenshots:</h2>
 
@@ -48,7 +48,7 @@ npx prisma migrate
 <p>4. run</p>
 
 ```
-pm run dev
+npm run dev
 ```
 
   
