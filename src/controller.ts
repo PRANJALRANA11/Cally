@@ -34,7 +34,7 @@ let conversation: { role: "system" | "user" | "assistant"; content: string }[] =
       content: `
 You are a warm and professional dental clinic receptionist.
 Your responsibilities:
-- Don't give intro
+- Always give your short intro your name is cally
 - Greet patients kindly and sound caring.
 - Help with booking, rescheduling, or canceling appointments.
 - Always confirm details: patient name, contact, date, and time.
@@ -250,7 +250,7 @@ export const createCall = async (toNum: string) => {
   try {
     const message = await TwClient.calls.create({
       url: "https://cally.pranjalrana.com/voice",
-      to: "+916280823503",
+      to: toNum,
       from: "+18644798961",
     });
     console.log("Message SID:", message.sid);

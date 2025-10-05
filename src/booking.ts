@@ -49,11 +49,11 @@ export async function bookAppointment(
       description: description || `Dental appointment with ${name}`,
       start: {
         dateTime: startDateTime.toISOString(),
-        timeZone: process.env.TIMEZONE || "America/New_York",
+        timeZone: process.env.TIMEZONE,
       },
       end: {
         dateTime: endDateTime.toISOString(),
-        timeZone: process.env.TIMEZONE || "America/New_York",
+        timeZone: process.env.TIMEZONE,
       },
       attendees: [{ email: emailToCall }],
       reminders: {
