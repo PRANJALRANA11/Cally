@@ -18,7 +18,7 @@
 
 Here're some of the project's best features:
 
-*   schedule call
+*   schedule calls
 *   get basic consultation on phone
 *   available 24/7
 *   book appointments
